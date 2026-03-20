@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="x5-orientation" content="portrait">
+  <meta name="screen-orientation" content="portrait">
+  <title>🌍 世界国家首都大挑战</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 8px;
+      padding-top: env(safe-area-inset-top, 8px);
+      padding-bottom: env(safe-area-inset-bottom, 8px);
+    }
+    .game-container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+      max-width: 500px;
+      width: 100%;
+      overflow: hidden;
+      min-height: calc(100dvh - 16px);
+    }
+    .header {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      padding: 12px 15px;
+      text-align: center;
+    }
+    .header h1 { font-size: 20px; margin-bottom: 5px; font-weight: 600; }
+    .stats {
+      display: flex;
+      justify-content: space-around;
+      background: #f8f9fa;
+      padding: 8px 5px;
+      border-bottom: 2px solid #e9ecef;
+      flex-wrap: wrap;
+    }
+    .stat-item { text-align: center; margin: 4px 8px; }
+    .stat-label { font-size: 10px; color: #6c757d; margin-bottom: 2px; }
+    .stat-value { font-size: 18px; font-weight: bold; color: #667eea; }
+    .timer-bar { height: 4px; background: #e9ecef; }
+    .timer-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+      transition: width 0.1s linear;
+    }
+    .question-area { padding: 15px 12px; text-align: center; }
+    .question-type {
+      font-size: 12px;
+      color: #6c757d;
+      background: #e9ecef;
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+    .question-text { font-size: 16px; color: #2c3e50; margin-bottom: 8px; }
+    .country-name {
+      font-size: 26px;
+      font-weight: bold;
+      color: white;
+      margin: 12px 0;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 12px;
+    }
+    .map-hint { font-size: 40px; margin: 8px 0; padding: 8px; background: #f8f9fa; border-radius: 8px; }
+    .options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px; }
+    .option-btn {
+      padding: 12px 8px;
+      font-size: 14px;
+      border: 2px solid #e9ecef;
+      border-radius: 10px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .option-btn:active { transform: scale(0.98); background: #f0f5ff; }
+    .option-btn.correct { background: #d4edda; border-color: #28a745; color: #155724; animation: celebrate 0.4s ease; }
+    .option-btn.wrong { background: #f8d7da; border-color: #dc3545; color: #721c24; animation: shake 0.4s ease; }
+    @keyframes celebrate { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+    @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+    .feedback { padding: 10px; text-align: center; font-size: 16px; font-weight: bold; min-height: 40px; }
+    .feedback.correct { color: #28a745; }
+    .feedback.wrong { color: #dc3545; }
+    .next-btn, .action-btn {
+      width: calc(100% - 32px);
+      margin: 0 16px 12px;
+      padding: 12px;
+      font-size: 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.2s;
+      display: none;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .next-btn.show, .action-btn.show { display: block; }
+    .next-btn:active, .action-btn:active { transform: scale(0.98); }
+    .progress-bar { height: 4px; background: #e9ecef; margin: 0 16px; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); transition: width 0.3s; border-radius: 2px; }
+    .start-screen, .end-screen, .learn-screen, .wrong-book-screen { padding: 20px 15px; text-align: center; }
+    .start-screen h2 { font-size: 22px; color: #667eea; margin-bottom: 12px; font-weight: 600; }
+    .start-screen p { font-size: 14px; color: #6c757d; margin-bottom: 15px; line-height: 1.5; }
+    .mode-select, .difficulty-select { margin: 12px 0; }
+    .mode-btn, .difficulty-btn {
+      padding: 8px 16px;
+      margin: 4px;
+      font-size: 13px;
+      border: 2px solid #667eea;
+      border-radius: 16px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .mode-btn.active, .difficulty-btn.active { background: #667eea; color: white; }
+    .mode-btn:active, .difficulty-btn:active { transform: scale(0.95); }
+    .start-btn, .restart-btn, .back-btn {
+      padding: 14px 40px;
+      font-size: 17px;
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      border: none;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: transform 0.2s;
+      font-weight: bold;
+      margin: 8px 5px;
+      width: 90%;
+      max-width: 300px;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .start-btn:active, .restart-btn:active, .back-btn:active { transform: scale(0.98); }
+    .end-screen .trophy { font-size: 60px; margin-bottom: 12px; }
+    .end-screen h2 { font-size: 22px; color: #667eea; margin-bottom: 12px; font-weight: 600; }
+    .final-score { font-size: 36px; font-weight: bold; color: #f5576c; margin: 12px 0; }
+    .hidden { display: none; }
+    .nav-menu { display: flex; justify-content: center; gap: 6px; padding: 8px; background: #f8f9fa; flex-wrap: wrap; }
+    .nav-btn {
+      padding: 6px 12px;
+      font-size: 11px;
+      border: 2px solid #667eea;
+      border-radius: 12px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.2s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    .nav-btn:active, .nav-btn.active { background: #667eea; color: white; }
+    .learn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; padding: 12px; max-height: 350px; overflow-y: auto; }
+    .learn-card { padding: 10px; background: #f8f9fa; border-radius: 8px; border: 2px solid #e9ecef; transition: all 0.2s; }
+    .learn-card:active { border-color: #667eea; }
+    .learn-country { font-size: 14px; font-weight: bold; color: #667eea; }
+    .learn-capital { font-size: 12px; color: #6c757d; margin-top: 4px; }
+    .learn-continent { font-size: 10px; color: #999; margin-top: 2px; }
+    .wrong-item { padding: 10px; background: #fff5f5; border-left: 3px solid #dc3545; border-radius: 6px; margin: 6px 0; text-align: left; }
+    .wrong-country { font-size: 14px; font-weight: bold; color: #dc3545; }
+    .wrong-answer { font-size: 12px; color: #6c757d; margin-top: 4px; }
+    .wrong-count { font-size: 11px; color: #999; margin-top: 3px; }
+    .filter-select { padding: 6px 12px; font-size: 13px; border: 2px solid #e9ecef; border-radius: 6px; margin: 8px 4px; cursor: pointer; -webkit-appearance: none; appearance: none; background: white; }
+    .settings-panel { background: #f8f9fa; padding: 12px; margin: 12px 16px; border-radius: 8px; }
+    .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #e9ecef; }
+    .setting-item:last-child { border-bottom: none; }
+    .toggle-switch { position: relative; width: 44px; height: 24px; background: #ccc; border-radius: 12px; cursor: pointer; transition: background 0.3s; }
+    .toggle-switch.on { background: #28a745; }
+    .toggle-switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; background: white; border-radius: 50%; transition: transform 0.3s; }
+    .toggle-switch.on::after { transform: translateX(20px); }
+    .wechat-tip {
+      background: #fff5f5;
+      padding: 10px;
+      margin: 10px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #dc3545;
+      border: 1px dashed #dc3545;
+    }
+    .empty-state { padding: 30px 20px; text-align: center; color: #28a745; }
+    .empty-state-icon { font-size: 50px; margin-bottom: 10px; }
+    .empty-state-text { font-size: 14px; color: #6c757d; }
+    .landscape-warning {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9);
+      color: white;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+    @media (orientation: landscape) and (max-height: 500px) {
+      .landscape-warning { display: flex; }
+    }
+    @media (max-width: 375px) {
+      .country-name { font-size: 22px; padding: 10px; }
+      .map-hint { font-size: 32px; }
+      .stat-value { font-size: 16px; }
+      .options { grid-template-columns: 1fr; gap: 6px; }
+      .option-btn { padding: 10px 6px; font-size: 13px; }
+      .start-screen h2 { font-size: 20px; }
+      .start-btn, .restart-btn, .back-btn { font-size: 15px; padding: 12px 30px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="landscape-warning">
+    <div>
+      <div style="font-size: 50px; margin-bottom: 20px;">📱</div>
+      <div style="font-size: 18px; margin-bottom: 10px;">请使用竖屏模式</div>
+      <div style="font-size: 14px; opacity: 0.8;">旋转您的设备以获得最佳体验</div>
+    </div>
+  </div>
+
+  <div class="game-container">
+    <div class="nav-menu" id="navMenu">
+      <button class="nav-btn active" onclick="showScreen('start')">🎮 开始</button>
+      <button class="nav-btn" onclick="showScreen('learn')">📖 学习</button>
+      <button class="nav-btn" onclick="showScreen('wrongBook')">📝 错题</button>
+      <button class="nav-btn" onclick="showScreen('settings')">⚙️ 设置</button>
+    </div>
+
+    <div class="wechat-tip" id="wechatTip" style="display: none;">
+      💡 点击右上角 <strong>⋯</strong> 可以<strong>收藏</strong>或<strong>发送到桌面</strong>！
+    </div>
+
+    <div class="start-screen" id="startScreen">
+      <h2>🌍 世界国家首都大挑战</h2>
+      <p>测试你对世界各国首都的了解程度！<br>包含 200+ 个国家，多种游戏模式等你挑战！</p>
+      
+      <div class="mode-select">
+        <p style="margin-bottom: 6px; color: #6c757d; font-size: 13px;">游戏模式：</p>
+        <button class="mode-btn active" data-mode="normal">📝 普通</button>
+        <button class="mode-btn" data-mode="timer">⏱️ 计时</button>
+        <button class="mode-btn" data-mode="ranking">🏅 排名</button>
+      </div>
+      
+      <div class="difficulty-select" id="difficultySelect">
+        <p style="margin-bottom: 6px; color: #6c757d; font-size: 13px;">难度选择：</p>
+        <button class="difficulty-btn active" data-level="easy">简单 (10 题)</button>
+        <button class="difficulty-btn" data-level="medium">中等 (20 题)</button>
+        <button class="difficulty-btn" data-level="hard">困难 (30 题)</button>
+        <button class="difficulty-btn" data-level="expert">专家 (50 题)</button>
+      </div>
+      
+      <div class="settings-panel" id="gameSettings">
+        <div class="setting-item">
+          <span>🗺️ 地图提示</span>
+          <div class="toggle-switch on" id="mapHintToggle" onclick="toggleSetting('mapHint')"></div>
+        </div>
+        <div class="setting-item">
+          <span>🔊 音效</span>
+          <div class="toggle-switch" id="soundToggle" onclick="toggleSetting('sound')"></div>
+        </div>
+      </div>
+      
+      <button class="start-btn" onclick="startGame()">开始游戏 🚀</button>
+    </div>
+
+    <div id="gameScreen" class="hidden">
+      <div class="header">
+        <h1 id="gameTitle">🌍 世界国家首都大挑战</h1>
+      </div>
+      
+      <div class="stats">
+        <div class="stat-item">
+          <div class="stat-label">得分</div>
+          <div class="stat-value" id="score">0</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">题目</div>
+          <div class="stat-value" id="questionNum">1/10</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">正确率</div>
+          <div class="stat-value" id="accuracy">0%</div>
+        </div>
+        <div class="stat-item" id="timerStat" style="display:none;">
+          <div class="stat-label">时间</div>
+          <div class="stat-value" id="timerDisplay">15</div>
+        </div>
+      </div>
+      
+      <div class="timer-bar" id="timerBar" style="display:none;">
+        <div class="timer-fill" id="timerFill" style="width: 100%"></div>
+      </div>
+      
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+      </div>
+      
+      <div class="question-area">
+        <div class="question-type" id="questionType">普通题目</div>
+        <div class="question-text" id="questionText">这个国家的首都是？</div>
+        <div class="country-name" id="countryName">中国</div>
+        <div class="map-hint" id="mapHint">🌏 亚洲</div>
+      </div>
+      
+      <div class="options" id="options"></div>
+      
+      <div class="feedback" id="feedback"></div>
+      
+      <button class="next-btn show" id="nextBtn" onclick="nextQuestion()">下一题 →</button>
+    </div>
+
+    <div class="end-screen hidden" id="endScreen">
+      <div class="trophy" id="trophy">🏆</div>
+      <h2 id="endTitle">太棒了！</h2>
+      <div class="final-score" id="finalScore">80 分</div>
+      <p id="endMessage" style="color: #6c757d; font-size: 15px; margin: 12px 0;"></p>
+      <div id="wrongSummary" style="margin: 12px 0; color: #dc3545; font-size: 14px;"></div>
+      <button class="restart-btn" onclick="restartGame()">再玩一次 🔄</button>
+      <button class="back-btn" onclick="reviewWrongAnswers()" style="background: #6c757d;">查看错题 📝</button>
+    </div>
+
+    <div class="learn-screen hidden" id="learnScreen">
+      <h2>📖 学习模式</h2>
+      <p style="color: #6c757d; margin: 12px 0; font-size: 14px;">按大洲浏览所有国家首都</p>
+      
+      <div>
+        <select class="filter-select" id="continentFilter" onchange="filterLearn()">
+          <option value="all">全部大洲</option>
+          <option value="亚洲">亚洲</option>
+          <option value="欧洲">欧洲</option>
+          <option value="非洲">非洲</option>
+          <option value="北美洲">北美洲</option>
+          <option value="南美洲">南美洲</option>
+          <option value="大洋洲">大洋洲</option>
+        </select>
+      </div>
+      
+      <div class="learn-grid" id="learnGrid"></div>
+      
+      <button class="back-btn show" onclick="showScreen('start')">返回主页</button>
+    </div>
+
+    <div class="wrong-book-screen hidden" id="wrongBookScreen">
+      <h2>📝 我的错题本</h2>
+      <p style="color: #6c757d; margin: 12px 0; font-size: 14px;">记录你答错的题目，多多复习哦！</p>
+      
+      <div style="padding: 0 10px 10px;">
+        <span style="font-size: 12px; color: #6c757d;">共 <strong id="wrongCount" style="color: #dc3545;">0</strong> 道错题</span>
+      </div>
+      
+      <div id="wrongBookList" style="max-height: 300px; overflow-y: auto; padding: 8px;"></div>
+      
+      <button class="restart-btn" onclick="reviewWrongAnswers()" style="margin-top: 12px;">🔄 复习错题</button>
+      <button class="back-btn show" onclick="showScreen('start')" style="margin-top: 12px;">返回主页</button>
+      <button class="back-btn show" onclick="clearWrongBook()" style="margin-top: 12px; background: #6c757d;">🗑️ 清空错题</button>
+    </div>
+
+    <div class="settings-panel hidden" id="settingsScreen" style="margin: 16px;">
+      <h2 style="color: #667eea; margin-bottom: 12px; font-size: 18px;">⚙️ 设置</h2>
+      
+      <div class="setting-item">
+        <span>🗺️ 地图提示</span>
+        <div class="toggle-switch on" id="settingMapHint" onclick="toggleSetting('mapHint')"></div>
+      </div>
+      <div class="setting-item">
+        <span>🔊 音效</span>
+        <div class="toggle-switch" id="settingSound" onclick="toggleSetting('sound')"></div>
+      </div>
+      <div class="setting-item">
+        <span>⏱️ 计时模式默认时间</span>
+        <select class="filter-select" id="defaultTimer" onchange="saveSettings()">
+          <option value="10">10 秒</option>
+          <option value="15" selected>15 秒</option>
+          <option value="30">30 秒</option>
+          <option value="60">60 秒</option>
+        </select>
+      </div>
+      
+      <button class="back-btn show" onclick="showScreen('start')" style="margin-top: 12px;">返回主页</button>
+    </div>
+  </div>
+
+  <script>
+    const countriesDB = [
+      {country:'中国',capital:'北京',continent:'亚洲'}, {country:'日本',capital:'东京',continent:'亚洲'},
+      {country:'韩国',capital:'首尔',continent:'亚洲'}, {country:'朝鲜',capital:'平壤',continent:'亚洲'},
+      {country:'蒙古',capital:'乌兰巴托',continent:'亚洲'}, {country:'越南',capital:'河内',continent:'亚洲'},
+      {country:'老挝',capital:'万象',continent:'亚洲'}, {country:'柬埔寨',capital:'金边',continent:'亚洲'},
+      {country:'泰国',capital:'曼谷',continent:'亚洲'}, {country:'缅甸',capital:'内比都',continent:'亚洲'},
+      {country:'马来西亚',capital:'吉隆坡',continent:'亚洲'}, {country:'新加坡',capital:'新加坡',continent:'亚洲'},
+      {country:'印度尼西亚',capital:'雅加达',continent:'亚洲'}, {country:'菲律宾',capital:'马尼拉',continent:'亚洲'},
+      {country:'印度',capital:'新德里',continent:'亚洲'}, {country:'巴基斯坦',capital:'伊斯兰堡',continent:'亚洲'},
+      {country:'孟加拉国',capital:'达卡',continent:'亚洲'}, {country:'斯里兰卡',capital:'科伦坡',continent:'亚洲'},
+      {country:'尼泊尔',capital:'加德满都',continent:'亚洲'}, {country:'不丹',capital:'廷布',continent:'亚洲'},
+      {country:'马尔代夫',capital:'马累',continent:'亚洲'}, {country:'阿富汗',capital:'喀布尔',continent:'亚洲'},
+      {country:'伊朗',capital:'德黑兰',continent:'亚洲'}, {country:'伊拉克',capital:'巴格达',continent:'亚洲'},
+      {country:'叙利亚',capital:'大马士革',continent:'亚洲'}, {country:'黎巴嫩',capital:'贝鲁特',continent:'亚洲'},
+      {country:'约旦',capital:'安曼',continent:'亚洲'}, {country:'以色列',capital:'耶路撒冷',continent:'亚洲'},
+      {country:'巴勒斯坦',capital:'拉马拉',continent:'亚洲'}, {country:'沙特阿拉伯',capital:'利雅得',continent:'亚洲'},
+      {country:'阿联酋',capital:'阿布扎比',continent:'亚洲'}, {country:'卡塔尔',capital:'多哈',continent:'亚洲'},
+      {country:'科威特',capital:'科威特城',continent:'亚洲'}, {country:'巴林',capital:'麦纳麦',continent:'亚洲'},
+      {country:'阿曼',capital:'马斯喀特',continent:'亚洲'}, {country:'也门',capital:'萨那',continent:'亚洲'},
+      {country:'土耳其',capital:'安卡拉',continent:'亚洲'}, {country:'格鲁吉亚',capital:'第比利斯',continent:'亚洲'},
+      {country:'亚美尼亚',capital:'埃里温',continent:'亚洲'}, {country:'阿塞拜疆',capital:'巴库',continent:'亚洲'},
+      {country:'哈萨克斯坦',capital:'努尔苏丹',continent:'亚洲'}, {country:'乌兹别克斯坦',capital:'塔什干',continent:'亚洲'},
+      {country:'土库曼斯坦',capital:'阿什哈巴德',continent:'亚洲'}, {country:'塔吉克斯坦',capital:'杜尚别',continent:'亚洲'},
+      {country:'吉尔吉斯斯坦',capital:'比什凯克',continent:'亚洲'},
+      {country:'俄罗斯',capital:'莫斯科',continent:'欧洲'}, {country:'英国',capital:'伦敦',continent:'欧洲'},
+      {country:'法国',capital:'巴黎',continent:'欧洲'}, {country:'德国',capital:'柏林',continent:'欧洲'},
+      {country:'意大利',capital:'罗马',continent:'欧洲'}, {country:'西班牙',capital:'马德里',continent:'欧洲'},
+      {country:'葡萄牙',capital:'里斯本',continent:'欧洲'}, {country:'荷兰',capital:'阿姆斯特丹',continent:'欧洲'},
+      {country:'比利时',capital:'布鲁塞尔',continent:'欧洲'}, {country:'卢森堡',capital:'卢森堡',continent:'欧洲'},
+      {country:'瑞士',capital:'伯尔尼',continent:'欧洲'}, {country:'奥地利',capital:'维也纳',continent:'欧洲'},
+      {country:'波兰',capital:'华沙',continent:'欧洲'}, {country:'捷克',capital:'布拉格',continent:'欧洲'},
+      {country:'斯洛伐克',capital:'布拉迪斯拉发',continent:'欧洲'}, {country:'匈牙利',capital:'布达佩斯',continent:'欧洲'},
+      {country:'罗马尼亚',capital:'布加勒斯特',continent:'欧洲'}, {country:'保加利亚',capital:'索菲亚',continent:'欧洲'},
+      {country:'希腊',capital:'雅典',continent:'欧洲'}, {country:'塞尔维亚',capital:'贝尔格莱德',continent:'欧洲'},
+      {country:'克罗地亚',capital:'萨格勒布',continent:'欧洲'}, {country:'斯洛文尼亚',capital:'卢布尔雅那',continent:'欧洲'},
+      {country:'波黑',capital:'萨拉热窝',continent:'欧洲'}, {country:'黑山',capital:'波德戈里察',continent:'欧洲'},
+      {country:'北马其顿',capital:'斯科普里',continent:'欧洲'}, {country:'阿尔巴尼亚',capital:'地拉那',continent:'欧洲'},
+      {country:'挪威',capital:'奥斯陆',continent:'欧洲'}, {country:'瑞典',capital:'斯德哥尔摩',continent:'欧洲'},
+      {country:'丹麦',capital:'哥本哈根',continent:'欧洲'}, {country:'芬兰',capital:'赫尔辛基',continent:'欧洲'},
+      {country:'冰岛',capital:'雷克雅未克',continent:'欧洲'}, {country:'爱尔兰',capital:'都柏林',continent:'欧洲'},
+      {country:'爱沙尼亚',capital:'塔林',continent:'欧洲'}, {country:'拉脱维亚',capital:'里加',continent:'欧洲'},
+      {country:'立陶宛',capital:'维尔纽斯',continent:'欧洲'}, {country:'白俄罗斯',capital:'明斯克',continent:'欧洲'},
+      {country:'乌克兰',capital:'基辅',continent:'欧洲'}, {country:'摩尔多瓦',capital:'基希讷乌',continent:'欧洲'},
+      {country:'马耳他',capital:'瓦莱塔',continent:'欧洲'}, {country:'塞浦路斯',capital:'尼科西亚',continent:'欧洲'},
+      {country:'摩纳哥',capital:'摩纳哥',continent:'欧洲'}, {country:'圣马力诺',capital:'圣马力诺',continent:'欧洲'},
+      {country:'梵蒂冈',capital:'梵蒂冈城',continent:'欧洲'}, {country:'安道尔',capital:'安道尔城',continent:'欧洲'},
+      {country:'埃及',capital:'开罗',continent:'非洲'}, {country:'利比亚',capital:'的黎波里',continent:'非洲'},
+      {country:'突尼斯',capital:'突尼斯',continent:'非洲'}, {country:'阿尔及利亚',capital:'阿尔及尔',continent:'非洲'},
+      {country:'摩洛哥',capital:'拉巴特',continent:'非洲'}, {country:'苏丹',capital:'喀土穆',continent:'非洲'},
+      {country:'埃塞俄比亚',capital:'亚的斯亚贝巴',continent:'非洲'}, {country:'肯尼亚',capital:'内罗毕',continent:'非洲'},
+      {country:'坦桑尼亚',capital:'多多马',continent:'非洲'}, {country:'乌干达',capital:'坎帕拉',continent:'非洲'},
+      {country:'卢旺达',capital:'基加利',continent:'非洲'}, {country:'布隆迪',capital:'基特加',continent:'非洲'},
+      {country:'南非',capital:'比勒陀利亚',continent:'非洲'}, {country:'尼日利亚',capital:'阿布贾',continent:'非洲'},
+      {country:'加纳',capital:'阿克拉',continent:'非洲'}, {country:'科特迪瓦',capital:'亚穆苏克罗',continent:'非洲'},
+      {country:'塞内加尔',capital:'达喀尔',continent:'非洲'}, {country:'马里',capital:'巴马科',continent:'非洲'},
+      {country:'尼日尔',capital:'尼亚美',continent:'非洲'}, {country:'乍得',capital:'恩贾梅纳',continent:'非洲'},
+      {country:'喀麦隆',capital:'雅温得',continent:'非洲'}, {country:'刚果 (布)',capital:'布拉柴维尔',continent:'非洲'},
+      {country:'刚果 (金)',capital:'金沙萨',continent:'非洲'}, {country:'安哥拉',capital:'罗安达',continent:'非洲'},
+      {country:'赞比亚',capital:'卢萨卡',continent:'非洲'}, {country:'津巴布韦',capital:'哈拉雷',continent:'非洲'},
+      {country:'莫桑比克',capital:'马普托',continent:'非洲'}, {country:'马达加斯加',capital:'塔那那利佛',continent:'非洲'},
+      {country:'博茨瓦纳',capital:'哈博罗内',continent:'非洲'}, {country:'纳米比亚',capital:'温得和克',continent:'非洲'},
+      {country:'莱索托',capital:'马塞卢',continent:'非洲'}, {country:'斯威士兰',capital:'姆巴巴内',continent:'非洲'},
+      {country:'毛里求斯',capital:'路易港',continent:'非洲'}, {country:'塞舌尔',capital:'维多利亚',continent:'非洲'},
+      {country:'美国',capital:'华盛顿',continent:'北美洲'}, {country:'加拿大',capital:'渥太华',continent:'北美洲'},
+      {country:'墨西哥',capital:'墨西哥城',continent:'北美洲'}, {country:'危地马拉',capital:'危地马拉城',continent:'北美洲'},
+      {country:'伯利兹',capital:'贝尔莫潘',continent:'北美洲'}, {country:'萨尔瓦多',capital:'圣萨尔瓦多',continent:'北美洲'},
+      {country:'洪都拉斯',capital:'特古西加尔巴',continent:'北美洲'}, {country:'尼加拉瓜',capital:'马那瓜',continent:'北美洲'},
+      {country:'哥斯达黎加',capital:'圣何塞',continent:'北美洲'}, {country:'巴拿马',capital:'巴拿马城',continent:'北美洲'},
+      {country:'古巴',capital:'哈瓦那',continent:'北美洲'}, {country:'牙买加',capital:'金斯敦',continent:'北美洲'},
+      {country:'海地',capital:'太子港',continent:'北美洲'}, {country:'多米尼加',capital:'圣多明各',continent:'北美洲'},
+      {country:'巴哈马',capital:'拿骚',continent:'北美洲'}, {country:'巴巴多斯',capital:'布里奇敦',continent:'北美洲'},
+      {country:'特立尼达和多巴哥',capital:'西班牙港',continent:'北美洲'},
+      {country:'巴西',capital:'巴西利亚',continent:'南美洲'}, {country:'阿根廷',capital:'布宜诺斯艾利斯',continent:'南美洲'},
+      {country:'智利',capital:'圣地亚哥',continent:'南美洲'}, {country:'秘鲁',capital:'利马',continent:'南美洲'},
+      {country:'哥伦比亚',capital:'波哥大',continent:'南美洲'}, {country:'委内瑞拉',capital:'加拉加斯',continent:'南美洲'},
+      {country:'厄瓜多尔',capital:'基多',continent:'南美洲'}, {country:'玻利维亚',capital:'苏克雷',continent:'南美洲'},
+      {country:'巴拉圭',capital:'亚松森',continent:'南美洲'}, {country:'乌拉圭',capital:'蒙得维的亚',continent:'南美洲'},
+      {country:'圭亚那',capital:'乔治敦',continent:'南美洲'}, {country:'苏里南',capital:'帕拉马里博',continent:'南美洲'},
+      {country:'澳大利亚',capital:'堪培拉',continent:'大洋洲'}, {country:'新西兰',capital:'惠灵顿',continent:'大洋洲'},
+      {country:'巴布亚新几内亚',capital:'莫尔兹比港',continent:'大洋洲'}, {country:'斐济',capital:'苏瓦',continent:'大洋洲'},
+      {country:'所罗门群岛',capital:'霍尼亚拉',continent:'大洋洲'}, {country:'瓦努阿图',capital:'维拉港',continent:'大洋洲'},
+      {country:'萨摩亚',capital:'阿皮亚',continent:'大洋洲'}, {country:'基里巴斯',capital:'塔拉瓦',continent:'大洋洲'},
+      {country:'汤加',capital:'努库阿洛法',continent:'大洋洲'}, {country:'密克罗尼西亚',capital:'帕利基尔',continent:'大洋洲'}
+    ];
+
+    const rankingQuestions = [
+      {type:'area_max',question:'世界上面积最大的国家是？',answer:'俄罗斯',options:['俄罗斯','加拿大','中国','美国']},
+      {type:'area_min',question:'世界上面积最小的国家是？',answer:'梵蒂冈',options:['梵蒂冈','摩纳哥','瑙鲁','图瓦卢']},
+      {type:'pop_max',question:'世界上人口最多的国家是？',answer:'印度',options:['印度','中国','美国','印度尼西亚']},
+      {type:'asia_largest',question:'亚洲面积最大的国家是？',answer:'中国',options:['中国','印度','哈萨克斯坦','沙特阿拉伯']},
+      {type:'europe_largest',question:'欧洲面积最大的国家是？',answer:'俄罗斯',options:['俄罗斯','乌克兰','法国','西班牙']},
+      {type:'africa_largest',question:'非洲面积最大的国家是？',answer:'阿尔及利亚',options:['阿尔及利亚','刚果 (金)','苏丹','尼日尔']},
+      {type:'americas_largest',question:'美洲面积最大的国家是？',answer:'加拿大',options:['加拿大','美国','巴西','阿根廷']},
+      {type:'oceania_largest',question:'大洋洲面积最大的国家是？',answer:'澳大利亚',options:['澳大利亚','巴布亚新几内亚','新西兰','斐济']}
+    ];
+
+    let currentLevel = 'easy';
+    let currentMode = 'normal';
+    let questions = [];
+    let currentQuestion = 0;
+    let score = 0;
+    let correctAnswers = 0;
+    let canAnswer = true;
+    let timerInterval = null;
+    let timeLeft = 15;
+    let defaultTimer = 15;
+    let wrongAnswers = [];
+    let currentWrongAnswers = [];
+    let settings = {mapHint: true, sound: false};
+
+    window.onload = function() {
+      loadSettings();
+      loadWrongBook();
+      initModeButtons();
+      initDifficultyButtons();
+      initLearnMode();
+      if (/micromessenger/i.test(navigator.userAgent)) {
+        document.getElementById('wechatTip').style.display = 'block';
+      }
+    };
+
+    function initModeButtons() {
+      document.querySelectorAll('.mode-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          currentMode = this.dataset.mode;
+          document.getElementById('difficultySelect').style.display = currentMode === 'ranking' ? 'none' : 'block';
+        });
+      });
+    }
+
+    function initDifficultyButtons() {
+      document.querySelectorAll('.difficulty-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+          currentLevel = this.dataset.level;
+        });
+      });
+    }
+
+    function toggleSetting(setting) {
+      settings[setting] = !settings[setting];
+      document.getElementById('mapHintToggle').className = `toggle-switch ${settings.mapHint ? 'on' : ''}`;
+      document.getElementById('soundToggle').className = `toggle-switch ${settings.sound ? 'on' : ''}`;
+      document.getElementById('settingMapHint').className = `toggle-switch ${settings.mapHint ? 'on' : ''}`;
+      document.getElementById('settingSound').className = `toggle-switch ${settings.sound ? 'on' : ''}`;
+      saveSettings();
+    }
+
+    function saveSettings() {
+      defaultTimer = parseInt(document.getElementById('defaultTimer').value);
+      try { localStorage.setItem('capitalsGameSettings', JSON.stringify({settings, defaultTimer})); }
+      catch(e) { console.log('存储失败', e); }
+    }
+
+    function loadSettings() {
+      try {
+        const saved = localStorage.getItem('capitalsGameSettings');
+        if (saved) {
+          const data = JSON.parse(saved);
+          settings = data.settings || settings;
+          defaultTimer = data.defaultTimer || 15;
+          document.getElementById('defaultTimer').value = defaultTimer;
+          toggleSetting('mapHint');
+          toggleSetting('sound');
+        }
+      } catch(e) { console.log('加载失败', e); }
+    }
+
+    // ========== 错题本核心功能 ==========
+    
+    function loadWrongBook() {
+      try {
+        const saved = localStorage.getItem('capitalsGameWrongBook');
+        if (saved) { wrongAnswers = JSON.parse(saved); }
+      } catch(e) { console.log('加载失败', e); wrongAnswers = []; }
+    }
+
+    function saveWrongBook() {
+      try { localStorage.setItem('capitalsGameWrongBook', JSON.stringify(wrongAnswers)); }
+      catch(e) { console.log('保存失败', e); }
+    }
+
+    function addToWrongBook(country, capital, wrongAnswer) {
+      // 查找是否已存在该国家的错题
+      let existing = wrongAnswers.find(w => w.country === country);
+      
+      if (existing) {
+        // 已存在：增加错误次数，更新最后错误时间
+        existing.count++;
+        existing.lastWrong = new Date().toISOString();
+        // 更新错误答案（记录最新的错误答案）
+        if (!existing.wrongAnswers.includes(wrongAnswer)) {
+          existing.wrongAnswers.push(wrongAnswer);
+        }
+      } else {
+        // 不存在：创建新错题记录
+        wrongAnswers.push({
+          country: country,
+          capital: capital,
+          wrongAnswers: [wrongAnswer],  // 数组存储所有错误答案
+          count: 1,
+          firstWrong: new Date().toISOString(),
+          lastWrong: new Date().toISOString()
+        });
+      }
+      saveWrongBook();
+    }
+
+    // 错题本去重显示（按国家去重，显示错误次数）
+    function renderWrongBook() {
+      const listEl = document.getElementById('wrongBookList');
+      const countEl = document.getElementById('wrongCount');
+      
+      // 更新错题总数
+      countEl.textContent = wrongAnswers.length;
+      
+      if (wrongAnswers.length === 0) {
+        listEl.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🎉</div>
+            <div class="empty-state-text">太棒了！错题本是空的！<br>继续保持哦~</div>
+          </div>
+        `;
+        return;
+      }
+      
+      // 按错误次数降序排序（错误最多的排前面）
+      const sorted = [...wrongAnswers].sort((a, b) => b.count - a.count);
+      
+      const html = sorted.map((w, i) => {
+        const wrongAnsText = w.wrongAnswers && w.wrongAnswers.length > 0 
+          ? w.wrongAnswers.join('、') 
+          : '未作答';
+        
+        return `
+          <div class="wrong-item">
+            <div class="wrong-country">${i + 1}. ${w.country}</div>
+            <div class="wrong-answer">✅ 正确答案：<strong>${w.capital}</strong></div>
+            <div class="wrong-answer">❌ 你的答案：${wrongAnsText}</div>
+            <div class="wrong-count">🔁 错误次数：${w.count} 次</div>
+          </div>
+        `;
+      }).join('');
+      
+      listEl.innerHTML = html;
+    }
+
+    // 复习错题功能
+    function reviewWrongAnswers() {
+      if (wrongAnswers.length === 0) {
+        alert('🎉 错题本是空的！真棒！');
+        return;
+      }
+      
+      // 从错题本中抽取题目（最多 20 道）
+      const reviewCount = Math.min(wrongAnswers.length, 20);
+      const shuffled = [...wrongAnswers].sort(() => 0.5 - Math.random());
+      const selected = shuffled.slice(0, reviewCount);
+      
+      // 构建复习题目
+      questions = selected.map(w => ({
+        type: 'review',
+        country: w.country,
+        capital: w.capital,
+        continent: countriesDB.find(c => c.country === w.country)?.continent || '未知'
+      }));
+      
+      currentQuestion = 0;
+      score = 0;
+      correctAnswers = 0;
+      canAnswer = true;
+      currentWrongAnswers = [];
+      
+      document.getElementById('endScreen').classList.add('hidden');
+      document.getElementById('gameScreen').classList.remove('hidden');
+      document.getElementById('timerStat').style.display = 'none';
+      document.getElementById('timerBar').style.display = 'none';
+      document.getElementById('gameTitle').textContent = `📝 错题复习 (${reviewCount}道)`;
+      
+      updateStats();
+      showQuestion();
+    }
+
+    // 清空错题本功能
+    function clearWrongBook() {
+      if (wrongAnswers.length === 0) {
+        alert('错题本已经是空的啦！');
+        return;
+      }
+      
+      if (confirm(`确定要清空错题本吗？\n\n共 ${wrongAnswers.length} 道错题将被清空。\n\n清空后无法恢复哦！`)) {
+        wrongAnswers = [];
+        saveWrongBook();
+        renderWrongBook();
+        alert('✅ 错题本已清空！重新开始学习吧~');
+      }
+    }
+
+    // ========== 游戏核心功能 ==========
+
+    function shuffleArray(array) {
+      const newArray = [...array];
+      for (let i = newArray.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+      }
+      return newArray;
+    }
+
+    function showScreen(screen) {
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('#startScreen, #gameScreen, #endScreen, #learnScreen, #wrongBookScreen, #settingsScreen').forEach(el => el.classList.add('hidden'));
+      
+      if (screen === 'start') {
+        document.getElementById('startScreen').classList.remove('hidden');
+        document.querySelector('.nav-btn:nth-child(1)').classList.add('active');
+      } else if (screen === 'learn') {
+        document.getElementById('learnScreen').classList.remove('hidden');
+        document.querySelector('.nav-btn:nth-child(2)').classList.add('active');
+        filterLearn();
+      } else if (screen === 'wrongBook') {
+        document.getElementById('wrongBookScreen').classList.remove('hidden');
+        document.querySelector('.nav-btn:nth-child(3)').classList.add('active');
+        renderWrongBook();
+      } else if (screen === 'settings') {
+        document.getElementById('settingsScreen').classList.remove('hidden');
+        document.querySelector('.nav-btn:nth-child(4)').classList.add('active');
+      }
+    }
+
+    function startGame() {
+      let questionCount;
+      
+      if (currentMode === 'ranking') {
+        questions = shuffleArray(rankingQuestions).slice(0, 8);
+      } else {
+        if (currentLevel === 'easy') { questionCount = 10; }
+        else if (currentLevel === 'medium') { questionCount = 20; }
+        else if (currentLevel === 'hard') { questionCount = 30; }
+        else { questionCount = 50; }
+        questions = shuffleArray(countriesDB).slice(0, questionCount).map(c => ({ type: 'normal', country: c.country, capital: c.capital, continent: c.continent }));
+      }
+      
+      currentQuestion = 0; score = 0; correctAnswers = 0; canAnswer = true; currentWrongAnswers = [];
+      
+      document.getElementById('startScreen').classList.add('hidden');
+      document.getElementById('endScreen').classList.add('hidden');
+      document.getElementById('gameScreen').classList.remove('hidden');
+      
+      document.getElementById('timerStat').style.display = currentMode === 'timer' ? 'block' : 'none';
+      document.getElementById('timerBar').style.display = currentMode === 'timer' ? 'block' : 'none';
+      document.getElementById('gameTitle').textContent = currentMode === 'timer' ? '⏱️ 计时挑战' : (currentMode === 'ranking' ? '🏅 排名挑战' : '🌍 国家首都挑战');
+      
+      updateStats();
+      showQuestion();
+    }
+
+    function showQuestion() {
+      canAnswer = true;
+      const q = questions[currentQuestion];
+      
+      document.getElementById('questionType').textContent = q.type === 'ranking' || q.type === 'review' ? (q.type === 'ranking' ? '🏅 排名题目' : '📝 复习题目') : '📝 普通题目';
+      document.getElementById('feedback').textContent = '';
+      document.getElementById('nextBtn').classList.remove('show');
+      
+      if (q.type === 'ranking') {
+        document.getElementById('questionText').textContent = q.question;
+        document.getElementById('countryName').textContent = '？';
+        document.getElementById('mapHint').textContent = '🌍 世界';
+        const optionsHtml = shuffleArray(q.options).map(opt => `<button class="option-btn" onclick="checkAnswer(this, '${opt.replace(/'/g, "\\'")}')">${opt}</button>`).join('');
+        document.getElementById('options').innerHTML = optionsHtml;
+      } else {
+        document.getElementById('questionText').textContent = '这个国家的首都是？';
+        document.getElementById('countryName').textContent = q.country;
+        document.getElementById('mapHint').textContent = settings.mapHint ? `🌏 ${q.continent}` : '';
+        let options = [q.capital];
+        const allCapitals = countriesDB.map(c => c.capital).filter(c => c !== q.capital);
+        const wrongOptions = shuffleArray(allCapitals).slice(0, 3);
+        options = shuffleArray([...options, ...wrongOptions]);
+        const optionsHtml = options.map(opt => `<button class="option-btn" onclick="checkAnswer(this, '${opt.replace(/'/g, "\\'")}')">${opt}</button>`).join('');
+        document.getElementById('options').innerHTML = optionsHtml;
+      }
+      
+      if (currentMode === 'timer' && q.type !== 'review') { startTimer(); }
+      updateStats();
+    }
+
+    function startTimer() {
+      timeLeft = defaultTimer;
+      document.getElementById('timerDisplay').textContent = timeLeft;
+      document.getElementById('timerFill').style.width = '100%';
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeLeft -= 0.1;
+        document.getElementById('timerDisplay').textContent = Math.ceil(timeLeft);
+        document.getElementById('timerFill').style.width = `${(timeLeft / defaultTimer) * 100}%`;
+        if (timeLeft <= 0) { clearInterval(timerInterval); timeUp(); }
+      }, 100);
+    }
+
+    function timeUp() {
+      if (!canAnswer) return;
+      canAnswer = false;
+      const q = questions[currentQuestion];
+      const correctAnswer = q.type === 'ranking' ? q.answer : q.capital;
+      document.getElementById('feedback').textContent = `⏰ 时间到！正确答案：${correctAnswer}`;
+      document.getElementById('feedback').className = 'feedback wrong';
+      if (q.type !== 'ranking' && q.type !== 'review') {
+        addToWrongBook(q.country, q.capital, '超时');
+        currentWrongAnswers.push({country: q.country, capital: q.capital, wrongAnswer: '超时'});
+      }
+      document.querySelectorAll('.option-btn').forEach(btn => { if (btn.textContent === correctAnswer) btn.classList.add('correct'); });
+      document.getElementById('nextBtn').classList.add('show');
+    }
+
+    function checkAnswer(btn, selectedAnswer) {
+      if (!canAnswer) return;
+      canAnswer = false;
+      clearInterval(timerInterval);
+      const q = questions[currentQuestion];
+      const correctAnswer = q.type === 'ranking' ? q.answer : q.capital;
+      
+      if (selectedAnswer === correctAnswer) {
+        btn.classList.add('correct');
+        const timeBonus = currentMode === 'timer' && q.type !== 'review' ? Math.ceil(timeLeft) : 0;
+        score += 10 + timeBonus;
+        correctAnswers++;
+        document.getElementById('feedback').textContent = timeBonus > 0 ? `✅ 太棒了！+${10+timeBonus}分` : '✅ 太棒了！答对了！';
+        document.getElementById('feedback').className = 'feedback correct';
+      } else {
+        btn.classList.add('wrong');
+        document.getElementById('feedback').textContent = `❌ 正确答案：${correctAnswer}`;
+        document.getElementById('feedback').className = 'feedback wrong';
+        if (q.type !== 'ranking' && q.type !== 'review') {
+          addToWrongBook(q.country, q.capital, selectedAnswer);
+          currentWrongAnswers.push({country: q.country, capital: q.capital, wrongAnswer: selectedAnswer});
+        }
+        document.querySelectorAll('.option-btn').forEach(b => { if (b.textContent === correctAnswer) b.classList.add('correct'); });
+      }
+      updateStats();
+      document.getElementById('nextBtn').classList.add('show');
+    }
+
+    function nextQuestion() {
+      currentQuestion++;
+      if (currentQuestion >= questions.length) { endGame(); }
+      else { showQuestion(); }
+    }
+
+    function updateStats() {
+      document.getElementById('score').textContent = score;
+      document.getElementById('questionNum').textContent = `${currentQuestion + 1}/${questions.length}`;
+      const accuracy = currentQuestion > 0 ? Math.round((correctAnswers / currentQuestion) * 100) : 0;
+      document.getElementById('accuracy').textContent = `${accuracy}%`;
+      document.getElementById('progressBar').style.width = `${(currentQuestion / questions.length) * 100}%`;
+    }
+
+    function endGame() {
+      document.getElementById('gameScreen').classList.add('hidden');
+      document.getElementById('endScreen').classList.remove('hidden');
+      const percentage = questions.length > 0 ? (score / (questions.length * 10)) * 100 : 0;
+      document.getElementById('finalScore').textContent = `${score}分`;
+      
+      let trophy, title, message;
+      if (percentage >= 90) { trophy = '🏆'; title = '太厉害了！'; message = '你简直是地理小达人！'; }
+      else if (percentage >= 70) { trophy = '🥈'; title = '做得很好！'; message = '你的地理知识很棒！'; }
+      else if (percentage >= 50) { trophy = '🥉'; title = '不错哦！'; message = '多学习会更棒！'; }
+      else { trophy = '📚'; title = '继续加油！'; message = '多看看世界地图！'; }
+      
+      document.getElementById('trophy').textContent = trophy;
+      document.getElementById('endTitle').textContent = title;
+      document.getElementById('endMessage').textContent = message;
+      
+      if (currentWrongAnswers.length > 0) {
+        document.getElementById('wrongSummary').textContent = `本次答错 ${currentWrongAnswers.length} 题，已加入错题本`;
+      } else {
+        document.getElementById('wrongSummary').textContent = '✨ 全对！太棒了！';
+      }
+    }
+
+    function restartGame() {
+      document.getElementById('endScreen').classList.add('hidden');
+      document.getElementById('startScreen').classList.remove('hidden');
+    }
+
+    function initLearnMode() {
+      renderLearnGrid();
+    }
+
+    function renderLearnGrid() {
+      const continent = document.getElementById('continentFilter').value;
+      const filtered = continent === 'all' ? countriesDB : countriesDB.filter(c => c.continent === continent);
+      const html = filtered.map(c => `<div class="learn-card"><div class="learn-country">🇨 ${c.country}</div><div class="learn-capital">📍 ${c.capital}</div><div class="learn-continent">🌏 ${c.continent}</div></div>`).join('');
+      document.getElementById('learnGrid').innerHTML = html;
+    }
+
+    function filterLearn() {
+      renderLearnGrid();
+    }
+  </script>
+</body>
+</html>
