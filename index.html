@@ -68,7 +68,7 @@
     }
     .question-text { font-size: 16px; color: #2c3e50; margin-bottom: 8px; }
     .country-name {
-      font-size: 26px;
+      font-size: 28px;
       font-weight: bold;
       color: white;
       margin: 12px 0;
@@ -76,7 +76,14 @@
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       border-radius: 12px;
     }
-    .map-hint { font-size: 40px; margin: 8px 0; padding: 8px; background: #f8f9fa; border-radius: 8px; }
+    .map-hint { 
+      font-size: 16px; 
+      margin: 8px 0; 
+      padding: 8px; 
+      background: #f8f9fa; 
+      border-radius: 8px;
+      color: #6c757d;
+    }
     .options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px; }
     .option-btn {
       padding: 12px 8px;
@@ -117,7 +124,7 @@
     .next-btn:active, .action-btn:active { transform: scale(0.98); }
     .progress-bar { height: 4px; background: #e9ecef; margin: 0 16px; }
     .progress-fill { height: 100%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); transition: width 0.3s; border-radius: 2px; }
-    .start-screen, .end-screen, .learn-screen, .wrong-book-screen { padding: 20px 15px; text-align: center; }
+    .start-screen, .end-screen, .learn-screen, .wrong-book-screen, .ranking-screen { padding: 20px 15px; text-align: center; }
     .start-screen h2 { font-size: 22px; color: #667eea; margin-bottom: 12px; font-weight: 600; }
     .start-screen p { font-size: 14px; color: #6c757d; margin-bottom: 15px; line-height: 1.5; }
     .mode-select, .difficulty-select { margin: 12px 0; }
@@ -155,6 +162,7 @@
     .end-screen .trophy { font-size: 60px; margin-bottom: 12px; }
     .end-screen h2 { font-size: 22px; color: #667eea; margin-bottom: 12px; font-weight: 600; }
     .final-score { font-size: 36px; font-weight: bold; color: #f5576c; margin: 12px 0; }
+    .accuracy-display { font-size: 18px; color: #28a745; margin: 8px 0; }
     .hidden { display: none; }
     .nav-menu { display: flex; justify-content: center; gap: 6px; padding: 8px; background: #f8f9fa; flex-wrap: wrap; }
     .nav-btn {
@@ -215,13 +223,42 @@
       .landscape-warning { display: flex; }
     }
     @media (max-width: 375px) {
-      .country-name { font-size: 22px; padding: 10px; }
-      .map-hint { font-size: 32px; }
+      .country-name { font-size: 24px; padding: 10px; }
+      .map-hint { font-size: 14px; }
       .stat-value { font-size: 16px; }
       .options { grid-template-columns: 1fr; gap: 6px; }
       .option-btn { padding: 10px 6px; font-size: 13px; }
       .start-screen h2 { font-size: 20px; }
       .start-btn, .restart-btn, .back-btn { font-size: 15px; padding: 12px 30px; }
+    }
+    
+    /* 排行榜样式 */
+    .ranking-list { max-height: 300px; overflow-y: auto; padding: 8px; }
+    .ranking-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      margin: 6px 0;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+    .ranking-item:nth-child(1) { border-left-color: #ffd700; background: #fffbea; }
+    .ranking-item:nth-child(2) { border-left-color: #c0c0c0; background: #f8f9fa; }
+    .ranking-item:nth-child(3) { border-left-color: #cd7f32; background: #fff5f5; }
+    .ranking-rank { font-size: 18px; font-weight: bold; color: #667eea; width: 30px; }
+    .ranking-name { flex: 1; text-align: left; font-size: 14px; color: #2c3e50; padding: 0 10px; }
+    .ranking-score { font-size: 16px; font-weight: bold; color: #f5576c; }
+    .ranking-date { font-size: 11px; color: #999; margin-top: 2px; }
+    .ranking-input {
+      padding: 10px;
+      font-size: 16px;
+      border: 2px solid #667eea;
+      border-radius: 8px;
+      width: 80%;
+      margin: 10px 0;
+      text-align: center;
     }
   </style>
 </head>
@@ -237,6 +274,7 @@
   <div class="game-container">
     <div class="nav-menu" id="navMenu">
       <button class="nav-btn active" onclick="showScreen('start')">🎮 开始</button>
+      <button class="nav-btn" onclick="showScreen('ranking')">🏆 排行</button>
       <button class="nav-btn" onclick="showScreen('learn')">📖 学习</button>
       <button class="nav-btn" onclick="showScreen('wrongBook')">📝 错题</button>
       <button class="nav-btn" onclick="showScreen('settings')">⚙️ 设置</button>
@@ -329,10 +367,28 @@
       <div class="trophy" id="trophy">🏆</div>
       <h2 id="endTitle">太棒了！</h2>
       <div class="final-score" id="finalScore">80 分</div>
+      <div class="accuracy-display" id="accuracyDisplay">正确率：80%</div>
       <p id="endMessage" style="color: #6c757d; font-size: 15px; margin: 12px 0;"></p>
       <div id="wrongSummary" style="margin: 12px 0; color: #dc3545; font-size: 14px;"></div>
+      
+      <div id="rankingInput" style="display: none; margin: 15px 0;">
+        <p style="color: #667eea; font-size: 14px; margin-bottom: 8px;">🎉 新纪录！输入你的名字登上排行榜：</p>
+        <input type="text" class="ranking-input" id="playerName" placeholder="你的名字" maxlength="10">
+        <button class="start-btn" onclick="saveRanking()" style="padding: 10px 30px; font-size: 15px;">提交成绩 📝</button>
+      </div>
+      
       <button class="restart-btn" onclick="restartGame()">再玩一次 🔄</button>
       <button class="back-btn" onclick="reviewWrongAnswers()" style="background: #6c757d;">查看错题 📝</button>
+    </div>
+
+    <div class="ranking-screen hidden" id="rankingScreen">
+      <h2>🏆 排行榜</h2>
+      <p style="color: #6c757d; margin: 12px 0; font-size: 14px;">看看谁是最强地理王！</p>
+      
+      <div class="ranking-list" id="rankingList"></div>
+      
+      <button class="back-btn show" onclick="showScreen('start')" style="margin-top: 12px;">返回主页</button>
+      <button class="back-btn show" onclick="clearRankings()" style="margin-top: 12px; background: #6c757d;">🗑️ 清空排行</button>
     </div>
 
     <div class="learn-screen hidden" id="learnScreen">
@@ -506,10 +562,58 @@
     let wrongAnswers = [];
     let currentWrongAnswers = [];
     let settings = {mapHint: true, sound: false};
+    let audioContext = null;
+
+    // 音效系统
+    function initAudio() {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function playSound(type) {
+      if (!settings.sound || !audioContext) return;
+      
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      
+      if (type === 'correct') {
+        oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1);
+        oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2);
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+      } else if (type === 'wrong') {
+        oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+        oscillator.frequency.setValueAtTime(150, audioContext.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.2);
+      } else if (type === 'win') {
+        [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
+          const osc = audioContext.createOscillator();
+          const gain = audioContext.createGain();
+          osc.connect(gain);
+          gain.connect(audioContext.destination);
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.2, audioContext.currentTime + i * 0.15);
+          gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.15 + 0.3);
+          osc.start(audioContext.currentTime + i * 0.15);
+          osc.stop(audioContext.currentTime + i * 0.15 + 0.3);
+        });
+      }
+    }
 
     window.onload = function() {
       loadSettings();
       loadWrongBook();
+      loadRankings();
       initModeButtons();
       initDifficultyButtons();
       initLearnMode();
@@ -583,23 +687,19 @@
     }
 
     function addToWrongBook(country, capital, wrongAnswer) {
-      // 查找是否已存在该国家的错题
       let existing = wrongAnswers.find(w => w.country === country);
       
       if (existing) {
-        // 已存在：增加错误次数，更新最后错误时间
         existing.count++;
         existing.lastWrong = new Date().toISOString();
-        // 更新错误答案（记录最新的错误答案）
         if (!existing.wrongAnswers.includes(wrongAnswer)) {
           existing.wrongAnswers.push(wrongAnswer);
         }
       } else {
-        // 不存在：创建新错题记录
         wrongAnswers.push({
           country: country,
           capital: capital,
-          wrongAnswers: [wrongAnswer],  // 数组存储所有错误答案
+          wrongAnswers: [wrongAnswer],
           count: 1,
           firstWrong: new Date().toISOString(),
           lastWrong: new Date().toISOString()
@@ -608,12 +708,10 @@
       saveWrongBook();
     }
 
-    // 错题本去重显示（按国家去重，显示错误次数）
     function renderWrongBook() {
       const listEl = document.getElementById('wrongBookList');
       const countEl = document.getElementById('wrongCount');
       
-      // 更新错题总数
       countEl.textContent = wrongAnswers.length;
       
       if (wrongAnswers.length === 0) {
@@ -626,7 +724,6 @@
         return;
       }
       
-      // 按错误次数降序排序（错误最多的排前面）
       const sorted = [...wrongAnswers].sort((a, b) => b.count - a.count);
       
       const html = sorted.map((w, i) => {
@@ -647,19 +744,16 @@
       listEl.innerHTML = html;
     }
 
-    // 复习错题功能
     function reviewWrongAnswers() {
       if (wrongAnswers.length === 0) {
         alert('🎉 错题本是空的！真棒！');
         return;
       }
       
-      // 从错题本中抽取题目（最多 20 道）
       const reviewCount = Math.min(wrongAnswers.length, 20);
       const shuffled = [...wrongAnswers].sort(() => 0.5 - Math.random());
       const selected = shuffled.slice(0, reviewCount);
       
-      // 构建复习题目
       questions = selected.map(w => ({
         type: 'review',
         country: w.country,
@@ -667,11 +761,7 @@
         continent: countriesDB.find(c => c.country === w.country)?.continent || '未知'
       }));
       
-      currentQuestion = 0;
-      score = 0;
-      correctAnswers = 0;
-      canAnswer = true;
-      currentWrongAnswers = [];
+      currentQuestion = 0; score = 0; correctAnswers = 0; canAnswer = true; currentWrongAnswers = [];
       
       document.getElementById('endScreen').classList.add('hidden');
       document.getElementById('gameScreen').classList.remove('hidden');
@@ -683,7 +773,6 @@
       showQuestion();
     }
 
-    // 清空错题本功能
     function clearWrongBook() {
       if (wrongAnswers.length === 0) {
         alert('错题本已经是空的啦！');
@@ -695,6 +784,100 @@
         saveWrongBook();
         renderWrongBook();
         alert('✅ 错题本已清空！重新开始学习吧~');
+      }
+    }
+
+    // ========== 排行榜核心功能 ==========
+    
+    let rankings = [];
+    
+    function loadRankings() {
+      try {
+        const saved = localStorage.getItem('capitalsGameRankings');
+        if (saved) { rankings = JSON.parse(saved); }
+      } catch(e) { console.log('加载失败', e); rankings = []; }
+    }
+    
+    function saveRankings() {
+      try { localStorage.setItem('capitalsGameRankings', JSON.stringify(rankings)); }
+      catch(e) { console.log('保存失败', e); }
+    }
+    
+    function renderRankings() {
+      const listEl = document.getElementById('rankingList');
+      
+      if (rankings.length === 0) {
+        listEl.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🏆</div>
+            <div class="empty-state-text">还没有排行榜记录<br>快来创造第一个纪录吧！</div>
+          </div>
+        `;
+        return;
+      }
+      
+      const sorted = [...rankings].sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return new Date(a.date) - new Date(b.date);
+      }).slice(0, 50);
+      
+      const html = sorted.map((r, i) => {
+        const date = new Date(r.date);
+        const dateStr = `${date.getMonth()+1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2,'0')}`;
+        
+        return `
+          <div class="ranking-item">
+            <div class="ranking-rank">${i + 1}</div>
+            <div class="ranking-name">
+              <div>${r.name}</div>
+              <div class="ranking-date">${dateStr} · ${r.mode} · ${r.level}</div>
+            </div>
+            <div class="ranking-score">${r.score}分</div>
+          </div>
+        `;
+      }).join('');
+      
+      listEl.innerHTML = html;
+    }
+    
+    function saveRanking() {
+      const nameInput = document.getElementById('playerName');
+      const name = nameInput.value.trim() || '匿名玩家';
+      
+      const finalAccuracy = questions.length > 0 ? Math.round((correctAnswers / questions.length) * 100) : 0;
+      
+      rankings.push({
+        name: name,
+        score: score,
+        accuracy: finalAccuracy,
+        mode: currentMode === 'timer' ? '计时' : (currentMode === 'ranking' ? '排名' : '普通'),
+        level: currentLevel === 'easy' ? '简单' : (currentLevel === 'medium' ? '中等' : (currentLevel === 'hard' ? '困难' : '专家')),
+        date: new Date().toISOString()
+      });
+      
+      rankings.sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return new Date(a.date) - new Date(b.date);
+      });
+      
+      rankings = rankings.slice(0, 50);
+      saveRankings();
+      
+      document.getElementById('rankingInput').style.display = 'none';
+      alert(`🎉 成绩已提交！\n\n${name}：${score}分\n正确率：${finalAccuracy}%`);
+    }
+    
+    function clearRankings() {
+      if (rankings.length === 0) {
+        alert('排行榜已经是空的啦！');
+        return;
+      }
+      
+      if (confirm(`确定要清空排行榜吗？\n\n共 ${rankings.length} 条记录将被清空。\n\n清空后无法恢复哦！`)) {
+        rankings = [];
+        saveRankings();
+        renderRankings();
+        alert('✅ 排行榜已清空！');
       }
     }
 
@@ -711,26 +894,31 @@
 
     function showScreen(screen) {
       document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('#startScreen, #gameScreen, #endScreen, #learnScreen, #wrongBookScreen, #settingsScreen').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('#startScreen, #gameScreen, #endScreen, #learnScreen, #wrongBookScreen, #settingsScreen, #rankingScreen').forEach(el => el.classList.add('hidden'));
       
       if (screen === 'start') {
         document.getElementById('startScreen').classList.remove('hidden');
         document.querySelector('.nav-btn:nth-child(1)').classList.add('active');
+      } else if (screen === 'ranking') {
+        document.getElementById('rankingScreen').classList.remove('hidden');
+        document.querySelector('.nav-btn:nth-child(2)').classList.add('active');
+        renderRankings();
       } else if (screen === 'learn') {
         document.getElementById('learnScreen').classList.remove('hidden');
-        document.querySelector('.nav-btn:nth-child(2)').classList.add('active');
+        document.querySelector('.nav-btn:nth-child(3)').classList.add('active');
         filterLearn();
       } else if (screen === 'wrongBook') {
         document.getElementById('wrongBookScreen').classList.remove('hidden');
-        document.querySelector('.nav-btn:nth-child(3)').classList.add('active');
+        document.querySelector('.nav-btn:nth-child(4)').classList.add('active');
         renderWrongBook();
       } else if (screen === 'settings') {
         document.getElementById('settingsScreen').classList.remove('hidden');
-        document.querySelector('.nav-btn:nth-child(4)').classList.add('active');
+        document.querySelector('.nav-btn:nth-child(5)').classList.add('active');
       }
     }
 
     function startGame() {
+      initAudio();
       let questionCount;
       
       if (currentMode === 'ranking') {
@@ -829,6 +1017,7 @@
         correctAnswers++;
         document.getElementById('feedback').textContent = timeBonus > 0 ? `✅ 太棒了！+${10+timeBonus}分` : '✅ 太棒了！答对了！';
         document.getElementById('feedback').className = 'feedback correct';
+        playSound('correct');
       } else {
         btn.classList.add('wrong');
         document.getElementById('feedback').textContent = `❌ 正确答案：${correctAnswer}`;
@@ -838,6 +1027,7 @@
           currentWrongAnswers.push({country: q.country, capital: q.capital, wrongAnswer: selectedAnswer});
         }
         document.querySelectorAll('.option-btn').forEach(b => { if (b.textContent === correctAnswer) b.classList.add('correct'); });
+        playSound('wrong');
       }
       updateStats();
       document.getElementById('nextBtn').classList.add('show');
@@ -860,8 +1050,12 @@
     function endGame() {
       document.getElementById('gameScreen').classList.add('hidden');
       document.getElementById('endScreen').classList.remove('hidden');
+      
+      const finalAccuracy = questions.length > 0 ? Math.round((correctAnswers / questions.length) * 100) : 0;
       const percentage = questions.length > 0 ? (score / (questions.length * 10)) * 100 : 0;
+      
       document.getElementById('finalScore').textContent = `${score}分`;
+      document.getElementById('accuracyDisplay').textContent = `正确率：${finalAccuracy}%`;
       
       let trophy, title, message;
       if (percentage >= 90) { trophy = '🏆'; title = '太厉害了！'; message = '你简直是地理小达人！'; }
@@ -877,6 +1071,19 @@
         document.getElementById('wrongSummary').textContent = `本次答错 ${currentWrongAnswers.length} 题，已加入错题本`;
       } else {
         document.getElementById('wrongSummary').textContent = '✨ 全对！太棒了！';
+      }
+      
+      // 显示排行榜输入（如果得分大于 0）
+      if (score > 0) {
+        document.getElementById('rankingInput').style.display = 'block';
+        document.getElementById('playerName').value = '';
+        document.getElementById('playerName').focus();
+      } else {
+        document.getElementById('rankingInput').style.display = 'none';
+      }
+      
+      if (percentage >= 70) {
+        playSound('win');
       }
     }
 
